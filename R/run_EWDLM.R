@@ -25,14 +25,14 @@ run_EWDLM <- function(mvalues, # tibble with columns "site" and "m_value"
       select(-model_dlm) |> 
       mutate(ewas_p_raw = map_dbl(model_lm, ~summary(.x)$coefficients[2,4])) |> 
       select(-model_lm) |> 
-      mutate(cum_coef = map_dbl(pred, ~c(.x$allfit)),
-             cum_se = map_dbl(pred, ~c(.x$allse)),
-             cum_ci_lower = map_dbl(pred, ~c(.x$alllow)),
-             cum_ci_upper = map_dbl(pred, ~c(.x$allhigh)),
-             screen_coef = map_dbl(pred, ~c(.x$screenfit)),
-             screen_se = map_dbl(pred, ~c(.x$screense)),
-             screen_ci_lower = map_dbl(pred, ~c(.x$screenlow)),
-             screen_ci_upper = map_dbl(pred, ~c(.x$screenhigh)),
+      mutate(all_coef = map_dbl(pred, ~c(.x$allfit)),
+             all_se = map_dbl(pred, ~c(.x$allse)),
+             all_ci_lower = map_dbl(pred, ~c(.x$alllow)),
+             all_ci_upper = map_dbl(pred, ~c(.x$allhigh)),
+             abs_coef = map_dbl(pred, ~c(.x$absfit)),
+             abs_se = map_dbl(pred, ~c(.x$absse)),
+             abs_ci_lower = map_dbl(pred, ~c(.x$abslow)),
+             abs_ci_upper = map_dbl(pred, ~c(.x$abshigh)),
              mat_coef = map(pred, ~c(.x$matfit)),
              mat_ci_lower = map(pred, ~c(.x$matlow)),
              mat_ci_upper = map(pred, ~c(.x$mathigh))) |>

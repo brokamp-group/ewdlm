@@ -66,11 +66,11 @@ window_range <- function(type, num_lags, coverage) {
 ewdlm_perf <- function(output_path, # path to directory where run_EWDLM output
                        simulation_path, # path to directory where simulated M values were saved
                        empirical_cutoff = F, # option to use user-defined alpha cutoffs after FDR correction
-                       alpha = 0.05) # IF empirical_cutoff == T, alpha should be a named numerical vector with cutoffs for "ewas", "dlm", and "dlm_abs"
+                       alpha = 0.05) # IF empirical_cutoff == T, alpha should be a named numerical vector with cutoffs for "ewas", "dlm_all", and "dlm_abs"
   {
   if (empirical_cutoff) {
     alpha_ewas <- alpha["ewas"]
-    alpha_dlm <- alpha["dlm"]
+    alpha_dlm_all <- alpha["dlm_all"]
     alpha_dlm_abs <- alpha["dlm_abs"]
   } else {
     alpha_ewas <- alpha_dlm <- alpha_dlm_abs <- alpha
@@ -82,16 +82,16 @@ ewdlm_perf <- function(output_path, # path to directory where run_EWDLM output
     collect() |> 
     mutate(ewas_p_adj = p.adjust(ewas_p_raw, method = "fdr"),
            sig_ewas = (ewas_p_adj < alpha_ewas),
-           dlm_p_raw = pnorm(abs(cum_coef/cum_se), lower.tail = F),
-           dlm_p_adj = p.adjust(dlm_p_raw, method = "fdr"),
-           sig_dlm = (dlm_p_adj < alpha_dlm),
-           dlm_abs_p_raw = pnorm(abs(screen_coef/screen_se), lower.tail = F),
+           dlm_all_p_raw = pnorm(abs(all_coef/all_se), lower.tail = F),
+           dlm_all_p_adj = p.adjust(dlm_all_p_raw, method = "fdr"),
+           sig_dlm_all = (dlm_all_p_adj < alpha_dlm_all),
+           dlm_abs_p_raw = pnorm(abs(abs_coef/abs_se), lower.tail = F),
            dlm_abs_p_adj = p.adjust(dlm_abs_p_raw, method = "fdr"),
            sig_dlm_abs = (dlm_abs_p_adj < alpha_dlm_abs))
   
-  sites_sig_dlm <- cumul_fits$site[cumul_fits$sig_dlm]
+  sites_sig_dlm_all <- cumul_fits$site[cumul_fits$sig_dlm_all]
   sites_sig_dlm_abs <- cumul_fits$site[cumul_fits$sig_dlm_abs]
-  sites_combined <- union(sites_sig_dlm, sites_sig_dlm_abs)
+  sites_combined <- union(sites_sig_dlm_all, sites_sig_dlm_abs)
   
   true_fits <- read_parquet(paste0(simulation_path, "m_sims.parquet"),
                             col_select = c("site", "window_type"))
@@ -148,16 +148,16 @@ ewdlm_perf <- function(output_path, # path to directory where run_EWDLM output
   
   perf_stats <- comparison_tibble |> 
     summarize(ewas = get_perf(assoc_exists, sig_ewas, output = "stats"),
-              dlm = get_perf(assoc_exists, sig_dlm, output = "stats"),
-              dlm_loc = get_perf(assoc_exists, sig_dlm, cen_good, output = "stats"),
+              dlm_all = get_perf(assoc_exists, sig_dlm_all, output = "stats"),
+              dlm_all_loc = get_perf(assoc_exists, sig_dlm_all, cen_good, output = "stats"),
               dlm_abs = get_perf(assoc_exists, sig_dlm_abs, output = "stats"),
               dlm_abs_loc = get_perf(assoc_exists, sig_dlm_abs, cen_good, output = "stats"))
   
   perf_by_window <- comparison_tibble |> 
     group_by(window_type) |>
     summarize(ewas = get_perf(assoc_exists, sig_ewas, output = "counts"),
-              dlm = get_perf(assoc_exists, sig_dlm, output = "counts"),
-              dlm_loc = get_perf(assoc_exists, sig_dlm, cen_good, output = "counts"),
+              dlm_all = get_perf(assoc_exists, sig_dlm_all, output = "counts"),
+              dlm_all_loc = get_perf(assoc_exists, sig_dlm_all, cen_good, output = "counts"),
               dlm_abs = get_perf(assoc_exists, sig_dlm_abs, output = "counts"),
               dlm_abs_loc = get_perf(assoc_exists, sig_dlm_abs, cen_good, output = "counts"))
   
